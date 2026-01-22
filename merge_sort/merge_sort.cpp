@@ -24,7 +24,6 @@ int* merge(int* left, int* right, int leftSize, int rightSize) {
     return result;
 }
 
-
 void print(int arr[], int size) {
     for (int i = 0; i < size; i++) {
         cout << *(arr + i) << ", ";
@@ -65,8 +64,6 @@ int* mergeSort(int arr[], int size) {
 
     return result;
 }
-
-
 
 int* generate(int samples, int min, int max) {
     int i;
