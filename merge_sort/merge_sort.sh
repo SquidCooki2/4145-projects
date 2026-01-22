@@ -1,7 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=zahi-shaikh-merge-sort
 #SBATCH --partition=Centaurus
-#SBATCH --time=00:01:00
+#SBATCH --time=00:10:00
+#SBATCH --mem=32G
 make
 echo "10^1:"
 ./merge_sort 10
