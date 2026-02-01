@@ -1,4 +1,3 @@
 n-body
 sim_state.o
 n-body.o
-output*.tsv

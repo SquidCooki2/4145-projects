@@ -10,3 +10,4 @@ echo "PARTICLES: 100, DT: 1, STEPS: 10000"
 ./n-body 100 1 10000 100
 echo "PARTICLES: 1000, DT: 1, STEPS: 10000"
 ./n-body 1000 1 10000 100
+exit 0

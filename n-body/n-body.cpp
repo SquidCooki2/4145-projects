@@ -84,9 +84,9 @@ int read_input(std::string filename, nbody::SimState& sim) {
     return 0;
 }
 
-bool parse_args(int argc, char* argv[], Config& config) {
+int parse_args(int argc, char* argv[], Config& config) {
     if (argc < 5) {
-        return false;
+        return 1;
     }
 
     config.n = std::stoul(argv[1]);
@@ -95,7 +95,7 @@ bool parse_args(int argc, char* argv[], Config& config) {
     config.dump_iterations = std::stoul(argv[4]);
 
     if (config.iterations <= 0 || config.dump_iterations <= 0 || config.dt <= 0 || config.n <= 0) {
-        return false;
+        return 1;
     }
 
     if (argc >= 6) {
@@ -103,7 +103,7 @@ bool parse_args(int argc, char* argv[], Config& config) {
         config.use_file = true;
     }
 
-    return true;
+    return 0;
 }
 
 
@@ -160,7 +160,7 @@ void init_random(nbody::SimState& sim, std::size_t n) {
 
 int main(int argc, char* argv[]) {
     Config config;
-    if (!parse_args(argc, argv, config)) {
+    if (parse_args(argc, argv, config) != 0) {
         std::cerr << "Usage:\n" << argv[0] << " N dt iterations dump_iterations [input_file]\nEnter non-zero positive args\n";
         return 1;
     }
