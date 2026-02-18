@@ -3,6 +3,7 @@
 #include <iostream>
 #include "rapidjson/include/rapidjson/document.h"
 #include <unordered_set>
+#include <chrono>
 
 std::string kBaseUrl = "http://hollywood-graph-crawler.bridgesuncc.org/neighbors/";
 
@@ -79,6 +80,7 @@ int main(int argc, char** argv) {
     std::string name = argv[1];
     int depth = std::stoi(argv[2]);
 
+    auto start = std::chrono::steady_clock::now();
     clean_string(name);
 
     std::string url = kBaseUrl + name;
@@ -99,6 +101,7 @@ int main(int argc, char** argv) {
 
         curl_easy_cleanup(curl);
     }
+    std::cout << "Runtime: " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start).count() << "μs" << std::endl;
 
     return 0;
 }
