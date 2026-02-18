@@ -94,10 +94,10 @@ int main(int argc, char** argv) {
 
         read_url(curl, url, depth, visited, results);
 
-        std::cout << "\nVisited nodes:\n";
-        for (const auto& r : results) {
-            std::cout << r << std::endl;
-        }
+        // std::cout << "\nVisited nodes:\n";
+        // for (const auto& r : results) {
+        //     std::cout << r << std::endl;
+        // }
 
         curl_easy_cleanup(curl);
     }
