@@ -3,12 +3,13 @@
 #SBATCH --partition=Centaurus
 #SBATCH --time=00:10:00
 #SBATCH --mem=32G
-make
-echo "Depth 2:"
+make clean
+make 
+echo "Depth 2: Tom Hanks"
 ./graph_crawler "Tom Hanks" 2
-echo "Depth 3:"
+echo "Depth 3: Tom Hanks"
 ./graph_crawler "Tom Hanks" 3
-echo "Depth 4:"
-./graph_crawler "Tom Hanks" 4
-echo "Depth 5:"
-./graph_crawler "Tom Hanks" 5
+echo "Depth 2: Chris Evans"
+./graph_crawler "Tom Hanks" 2
+echo "Depth 2: Morgan Freeman"
+./graph_crawler "Morgan Freeman" 2
