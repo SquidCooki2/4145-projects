@@ -56,7 +56,7 @@ int read_url(CURL* curl, std::string& url, size_t depth, std::unordered_set<std:
         auto neighbors = doc["neighbors"].GetArray();
         std::string next_url = "";
         for (auto& n : neighbors) {
-            std::cout << "> " << n.GetString() << std::endl;
+            // std::cout << "> " << n.GetString() << std::endl;
             next_url = kBaseUrl + n.GetString();
             clean_string(next_url);
             for (size_t i = 0; i < tabs; i++) { std::cout << "\t"; }
