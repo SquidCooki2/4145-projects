@@ -7,12 +7,16 @@ Additionally, you can start at a node with: `./graph_crawler "[Actor or movie]" 
 
 Example slurm out:
 ```
-rm -f graph_crawler
-g++ graph_crawler.cpp -std=c++17 -Wall -Irapidjson/include -lcurl -o graph_crawler
 Depth 2: Tom Hanks
-Runtime: 6488389μs
+Total unique nodes visited: 888
+Runtime: 6406ms
+Depth 3: Tom Hanks
+Total unique nodes visited: 5827
+Runtime: 142967ms
 Depth 2: Chris Evans
-Runtime: 6391928μs
+Total unique nodes visited: 1132
+Runtime: 6732ms
 Depth 2: Morgan Freeman
-Runtime: 10557828μs
+Total unique nodes visited: 1164
+Runtime: 10608ms
 ```
