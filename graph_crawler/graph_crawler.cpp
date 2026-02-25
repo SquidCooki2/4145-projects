@@ -92,11 +92,11 @@ int main(int argc, char** argv) {
     crawl(url, depth, visited, results);
 
     curl_global_cleanup();
-
+    std::cout << "Total unique nodes visited: " << visited.size() << std::endl;
     std::cout << "Runtime: "
-              << std::chrono::duration_cast<std::chrono::microseconds>(
+              << std::chrono::duration_cast<std::chrono::milliseconds>(
                      std::chrono::steady_clock::now() - start).count()
-              << "μs" << std::endl;
+              << "ms" << std::endl;
 
     return 0;
 }
