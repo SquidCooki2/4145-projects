@@ -6,10 +6,10 @@
 make clean
 make 
 echo "Depth 2: Tom Hanks"
-./graph_crawler "Tom Hanks" 2
+./level_client "Tom Hanks" 2
 echo "Depth 3: Tom Hanks"
-./graph_crawler "Tom Hanks" 3
+./level_client "Tom Hanks" 3
 echo "Depth 2: Chris Evans"
-./graph_crawler "Chris Evans" 2
+./level_client "Chris Evans" 2
 echo "Depth 2: Morgan Freeman"
-./graph_crawler "Morgan Freeman" 2
+./level_client "Morgan Freeman" 2
