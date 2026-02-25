@@ -95,7 +95,7 @@ void crawl_parallel(const std::string& start_node, int max_depth) {
         if (current_level.empty()) break;
     }
 
-    std::cout << "Total Unique Nodes Visited: " << visited.size() << std::endl;
+    std::cout << "Total unique nodes visited: " << visited.size() << std::endl;
 }
 
 int main(int argc, char** argv) {
