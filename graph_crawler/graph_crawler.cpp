@@ -57,8 +57,8 @@ void crawl(const std::string& start_url, int depth, std::unordered_set<std::stri
 
         rapidjson::Document doc;
         doc.Parse(buf.c_str());
-        if (doc.HasParseError()) continue;
-
+        if (doc.HasParseError() || !doc.HasMember("neighbors")) continue;
+        
         auto neighbors = doc["neighbors"].GetArray();
         for (auto& n : neighbors) {
             std::string next_url = kBaseUrl + std::string(n.GetString());
