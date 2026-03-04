@@ -95,6 +95,12 @@ std::unordered_set<std::string> crawl(const std::string& start_url, int depth) {
     q.push({start_url, 0});
     visited.insert(start_url);
 
+    auto decrement_active_tasks = [&]() {
+        if (--active_tasks == 0) {
+            q.finish();
+        }
+    };
+
     auto worker = [&]() {
         std::pair<std::string,int> current;
 
@@ -104,19 +110,19 @@ std::unordered_set<std::string> crawl(const std::string& start_url, int depth) {
             if (d == depth) {
                 std::lock_guard<std::mutex> lock(results_mutex);
                 results.insert(url);
-                active_tasks--;
+                decrement_active_tasks();
                 continue;
             }
             std::string buf;
             if (!fetch_neighbors(url, buf)) {
-                active_tasks--;
+                decrement_active_tasks();
                 continue;
             }
 
             rapidjson::Document doc;
             doc.Parse(buf.c_str());
             if (doc.HasParseError() || !doc.HasMember("neighbors")) {
-                active_tasks--;
+                decrement_active_tasks();
                 continue;
             }
             auto neighbors = doc["neighbors"].GetArray();
@@ -133,11 +139,7 @@ std::unordered_set<std::string> crawl(const std::string& start_url, int depth) {
                 }
             }
 
-            // std::cout << "Active: " << active_tasks << " at depth " << d << std::endl;
-            if (--active_tasks == 0) {
-                std::cout << "All tasks done, finishing queue\n";
-                q.finish();
-            }
+            decrement_active_tasks();
         }
     };
 
