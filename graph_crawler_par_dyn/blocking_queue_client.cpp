@@ -133,7 +133,7 @@ std::unordered_set<std::string> crawl(const std::string& start_url, int depth) {
                 }
             }
 
-            
+            // std::cout << "Active: " << active_tasks << " at depth " << d << std::endl;
             if (--active_tasks == 0) {
                 std::cout << "All tasks done, finishing queue\n";
                 q.finish();

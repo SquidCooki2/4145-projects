@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=zahi-shaikh-merge-sort
+#SBATCH --job-name=zahi-shaikh
 #SBATCH --partition=Centaurus
 #SBATCH --time=00:10:00
 #SBATCH --mem=32G
