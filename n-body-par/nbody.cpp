@@ -207,10 +207,13 @@ int main(int argc, char* argv[]) {
     } else {
       std::string input = argv[1];
       if (input == "planet")
+        std::cout << "solar : ",
         init_solar(s);
       else
+        std::cout << "nbpart : " << input << " : ",
         load_from_file(s, input);
     }
+    std::cout << "nbthreads : " << nbthreads << " : ";
   }
 
   for (size_t step = 0; step < nbstep; ++step) {
@@ -221,8 +224,7 @@ int main(int argc, char* argv[]) {
     compute_forces(s, omp);
     integrate_motion(s, dt, omp);
   }
-  std::cout << "Runtime: " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start).count() << "μs\n";
-  std::cout << "Finished successfully\n";
+  std::cout << "runtime : " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start).count() << "μs\n";
 
   return 0;
 }
