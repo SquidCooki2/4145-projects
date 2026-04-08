@@ -2,6 +2,7 @@
 #include <fstream>
 #include <random>
 #include <cmath>
+#include "omp_loop.hpp"
 
 double G = 6.674*std::pow(10,-11);
 //double G = 1;
@@ -76,7 +77,6 @@ void random_init(simulation& s) {
     s.vy[i] -= meanmassvy/meanmass;
     s.vz[i] -= meanmassvz/meanmass;
   }
-  
 }
 
 void init_solar(simulation& s) {
@@ -107,129 +107,118 @@ void init_solar(simulation& s) {
   s.vz = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 }
 
-//meant to update the force that from applies on to
-void update_force(simulation& s, size_t from, size_t to) {
-  double softening = .1;
-  double dist_sq = std::pow(s.x[from]-s.x[to],2)
-    + std::pow(s.y[from]-s.y[to],2)
-    + std::pow(s.z[from]-s.z[to],2);
-  double F = G * s.mass[from]*s.mass[to]/(dist_sq+softening); //that the strength of the force
-
-  //direction
-  double dx = s.x[from]-s.x[to];
-  double dy = s.y[from]-s.y[to];
-  double dz = s.z[from]-s.z[to];
-  double norm = std::sqrt(dx*dx+dy*dy+dz*dz);
-  
-  dx = dx/norm;
-  dy = dy/norm;
-  dz = dz/norm;
-
-  //apply force
-  s.fx[to] += dx*F;
-  s.fy[to] += dy*F;
-  s.fz[to] += dz*F;
-}
-
-void reset_force(simulation& s) {
-  for (size_t i=0; i<s.nbpart; ++i) {
-    s.fx[i] = 0.;
-    s.fy[i] = 0.;
-    s.fz[i] = 0.;
-  }
-}
-
-void apply_force(simulation& s, size_t i, double dt) {
-  s.vx[i] += s.fx[i]/s.mass[i]*dt;
-  s.vy[i] += s.fy[i]/s.mass[i]*dt;
-  s.vz[i] += s.fz[i]/s.mass[i]*dt;
-}
-
-void update_position(simulation& s, size_t i, double dt) {
-  s.x[i] += s.vx[i]*dt;
-  s.y[i] += s.vy[i]*dt;
-  s.z[i] += s.vz[i]*dt;
-}
-
-void dump_state(simulation& s) {
-  std::cout<<s.nbpart<<'\t';
-  for (size_t i=0; i<s.nbpart; ++i) {
-    std::cout<<s.mass[i]<<'\t';
-    std::cout<<s.x[i]<<'\t'<<s.y[i]<<'\t'<<s.z[i]<<'\t';
-    std::cout<<s.vx[i]<<'\t'<<s.vy[i]<<'\t'<<s.vz[i]<<'\t';
-    std::cout<<s.fx[i]<<'\t'<<s.fy[i]<<'\t'<<s.fz[i]<<'\t';
-  }
-  std::cout<<'\n';
-}
-
-void load_from_file(simulation& s, std::string filename) {
-  std::ifstream in (filename);
+void load_from_file(simulation& s, const std::string& filename) {
+  std::ifstream in(filename);
   size_t nbpart;
-  in>>nbpart;
+  in >> nbpart;
   s = simulation(nbpart);
-  for (size_t i=0; i<s.nbpart; ++i) {
-    in>>s.mass[i];
-    in >>  s.x[i] >>  s.y[i] >>  s.z[i];
+  for (size_t i = 0; i < s.nbpart; ++i) {
+    in >> s.mass[i];
+    in >> s.x[i]  >> s.y[i]  >> s.z[i];
     in >> s.vx[i] >> s.vy[i] >> s.vz[i];
     in >> s.fx[i] >> s.fy[i] >> s.fz[i];
   }
-  if (!in.good())
-    throw "kaboom";
+  if (!in.good()) throw std::runtime_error("Failed to read file: " + filename);
+}
+
+void update_force(simulation& s, size_t from, size_t to) {
+  constexpr double softening = 0.1;
+
+  double dx = s.x[from] - s.x[to];
+  double dy = s.y[from] - s.y[to];
+  double dz = s.z[from] - s.z[to];
+
+  double dist_sq = dx*dx + dy*dy + dz*dz + softening;
+  double F       = G * s.mass[from] * s.mass[to] / dist_sq;
+
+  double norm = std::sqrt(dx*dx + dy*dy + dz*dz);
+  if (norm < 1e-30) return;
+
+  s.fx[to] += (dx / norm) * F;
+  s.fy[to] += (dy / norm) * F;
+  s.fz[to] += (dz / norm) * F;
+}
+
+void reset_force(simulation& s, OmpLoop& omp) {
+  omp.parfor(0, s.nbpart, [&](size_t i) {
+    s.fx[i] = 0.0;
+    s.fy[i] = 0.0;
+    s.fz[i] = 0.0;
+  });
+}
+
+void compute_forces(simulation& s, OmpLoop& omp) {
+  omp.parfor(0, s.nbpart, [&](size_t i) {
+    for (size_t j = 0; j < s.nbpart; ++j)
+      if (i != j)
+        update_force(s, j, i); 
+  });
+}
+
+void integrate_motion(simulation& s, double dt, OmpLoop& omp) {
+  omp.parfor(0, s.nbpart, [&](size_t i) {
+    s.vx[i] += s.fx[i] / s.mass[i] * dt;
+    s.vy[i] += s.fy[i] / s.mass[i] * dt;
+    s.vz[i] += s.fz[i] / s.mass[i] * dt;
+
+    s.x[i] += s.vx[i] * dt;
+    s.y[i] += s.vy[i] * dt;
+    s.z[i] += s.vz[i] * dt;
+  });
+}
+
+void dump_state(const simulation& s) {
+  std::cout << s.nbpart << '\t';
+  for (size_t i = 0; i < s.nbpart; ++i) {
+    std::cout << s.mass[i] << '\t';
+    std::cout << s.x[i]  << '\t' << s.y[i]  << '\t' << s.z[i]  << '\t';
+    std::cout << s.vx[i] << '\t' << s.vy[i] << '\t' << s.vz[i] << '\t';
+    std::cout << s.fx[i] << '\t' << s.fy[i] << '\t' << s.fz[i] << '\t';
+  }
+  std::cout << '\n';
 }
 
 int main(int argc, char* argv[]) {
-  if (argc != 5) {
+  if (argc != 6) {
     std::cerr
-      <<"usage: "<<argv[0]<<" <input> <dt> <nbstep> <printevery>"<<"\n"
-      <<"input can be:"<<"\n"
-      <<"a number (random initialization)"<<"\n"
-      <<"planet (initialize with solar system)"<<"\n"
-      <<"a filename (load from file in singleline tsv)"<<"\n";
+      << "usage: " << argv[0]
+      << " <input> <dt> <nbstep> <printevery> <nbthreads>\n"
+      << "  input: a number (random init), \"planet\" (solar system), or a filename\n";
     return -1;
   }
-  
-  double dt = std::atof(argv[2]); //in seconds
-  size_t nbstep = std::atol(argv[3]);
-  size_t printevery = std::atol(argv[4]);
-  
-  
-  simulation s(1);
 
-  //parse command line
+  double dt         = std::atof(argv[2]);
+  size_t nbstep     = std::atol(argv[3]);
+  size_t printevery = std::atol(argv[4]);
+  int    nbthreads  = std::atoi(argv[5]);
+
+  OmpLoop omp;
+  omp.setNbThread(nbthreads);
+  omp.setGranularity(64);   // chunk size – tune to your hardware
+
+  simulation s(1);
   {
-    size_t nbpart = std::atol(argv[1]); //return 0 if not a number
-    if ( nbpart > 0) {
+    size_t nbpart = std::atol(argv[1]);
+    if (nbpart > 0) {
       s = simulation(nbpart);
       random_init(s);
     } else {
-      std::string inputparam = argv[1];
-      if (inputparam == "planet") {
-	init_solar(s);
-      } else{
-	load_from_file(s, inputparam);
-      }
-    }    
-  }
-
-  
-  for (size_t step = 0; step< nbstep; step++) {
-    if (step %printevery == 0)
-      dump_state(s);
-  
-    reset_force(s);
-    for (size_t i=0; i<s.nbpart; ++i)
-      for (size_t j=0; j<s.nbpart; ++j)
-	if (i != j)
-	  update_force(s, i, j);
-
-    for (size_t i=0; i<s.nbpart; ++i) {
-      apply_force(s, i, dt);
-      update_position(s, i, dt);
+      std::string input = argv[1];
+      if (input == "planet")
+        init_solar(s);
+      else
+        load_from_file(s, input);
     }
   }
-  
-  //dump_state(s);  
 
+  for (size_t step = 0; step < nbstep; ++step) {
+    if (step % printevery == 0)
+      dump_state(s);
+
+    reset_force(s, omp);
+    compute_forces(s, omp);
+    integrate_motion(s, dt, omp);
+  }
 
   return 0;
 }
