@@ -3,6 +3,7 @@
 #include <random>
 #include <cmath>
 #include "omp_loop.hpp"
+#include <chrono>
 
 double G = 6.674*std::pow(10,-11);
 //double G = 1;
@@ -194,8 +195,9 @@ int main(int argc, char* argv[]) {
 
   OmpLoop omp;
   omp.setNbThread(nbthreads);
-  omp.setGranularity(64);   // chunk size – tune to your hardware
+  omp.setGranularity(64);
 
+  auto start = std::chrono::steady_clock::now();
   simulation s(1);
   {
     size_t nbpart = std::atol(argv[1]);
@@ -219,6 +221,8 @@ int main(int argc, char* argv[]) {
     compute_forces(s, omp);
     integrate_motion(s, dt, omp);
   }
+  std::cout << "Runtime: " << std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start).count() << "μs\n";
+  std::cout << "Finished successfully\n";
 
   return 0;
 }
