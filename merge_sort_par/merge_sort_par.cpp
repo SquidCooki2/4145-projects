@@ -8,9 +8,10 @@
 #include <algorithm>
 #include <chrono>
 #include <vector>
-#include <omp_tasking.hpp>
+#include "omp_tasking.hpp"
 
 #define DEBUG 0
+#define SEQ_TASK_CUTOFF 1000
 
 void generateMergeSortData (std::vector<int>& arr, size_t n) {
   for (size_t  i=0; i< n; ++i) {
@@ -20,9 +21,14 @@ void generateMergeSortData (std::vector<int>& arr, size_t n) {
   
 void checkMergeSortResult (std::vector<int>& arr, size_t n) {
   bool ok = true;
-  for (size_t  i=1; i<n; ++i)
+  for (size_t  i=1; i<n; ++i) {
+#if DEBUG
+    printf("%d ", arr[i]);
+#endif
     if (arr[i]< arr[i-1])
       ok = false;
+  }
+  printf("\n");
   if(!ok)
     std::cerr<<"notok"<<std::endl;
 }
@@ -38,9 +44,9 @@ void merge(int * arr, size_t  l, size_t  mid, size_t r, int* temp) {
   if (l == r) return;
   if (r-l == 1) {
     if (arr[l] > arr[r]) {
-      size_t temp = arr[l];
+      size_t temp_val = arr[l];
       arr[l] = arr[r];
-      arr[r] = temp;
+      arr[r] = temp_val;
     }
     return;
   }
@@ -50,7 +56,7 @@ void merge(int * arr, size_t  l, size_t  mid, size_t r, int* temp) {
   
   // init temp arrays
   for (i=0; i<n; ++i)
-    temp[i] = arr[l+i];
+    temp[l+i] = arr[l+i];
 
   i = 0;    // temp left half
   j = mid;  // right half
@@ -58,8 +64,8 @@ void merge(int * arr, size_t  l, size_t  mid, size_t r, int* temp) {
 
   // merge
   while (i<n && j<=r) {
-     if (temp[i] <= arr[j] ) {
-       arr[k++] = temp[i++];
+     if (temp[l+i] <= arr[j] ) {
+       arr[k++] = temp[l+i++];
      } else {
        arr[k++] = arr[j++];
      }
@@ -67,29 +73,49 @@ void merge(int * arr, size_t  l, size_t  mid, size_t r, int* temp) {
 
   // exhaust temp 
   while (i<n) {
-    arr[k++] = temp[i++];
+    arr[k++] = temp[l+i++];
   }
 
 }
 
-void mergesort(int * arr, size_t l, size_t r, int* temp) {
+void mergesort_seq(int * arr, size_t l, size_t r, int* temp) {
   if (l < r) {
     size_t mid = (l+r)/2;
-    mergesort(arr, l, mid, temp);
-    mergesort(arr, mid+1, r, temp);
+    mergesort_seq(arr, l, mid, temp);
+    mergesort_seq(arr, mid+1, r, temp);
+    merge(arr, l, mid+1, r, temp);
+  }
+}
+
+void mergesort(int * arr, size_t l, size_t r, int* temp) {
+  if (r - l + 1 < SEQ_TASK_CUTOFF) {
+    mergesort_seq(arr, l, r, temp);
+    return;
+  }
+
+  if (l < r) {
+    size_t mid = (l+r)/2;
+    tasking::taskstart([=] () {
+      mergesort(arr, l, mid, temp);
+    });
+    tasking::taskstart([=] () {
+      mergesort(arr, mid+1, r, temp);
+    });
+    tasking::taskwait();
     merge(arr, l, mid+1, r, temp);
   }
 }
 
 
 int main (int argc, char* argv[]) {
-  if (argc < 2) {
-    std::cerr<<"Usage: "<<argv[0]<<" <n>"<<std::endl;
+  if (argc < 3) {
+    std::cerr<<"Usage: "<<argv[0]<<" <n> <threads>"<<std::endl;
     return -1;
   }
   
   // command line parameter
   size_t n = atol(argv[1]);
+  int threads = atoi(argv[2]);
 
   // get arr data
   std::vector<int> arr (n);
@@ -106,7 +132,9 @@ int main (int argc, char* argv[]) {
   
   std::vector<int> temp (n);
   // sort
-  mergesort(&(arr[0]), 0, n-1, &(temp[0]));
+  tasking::doinparallel([&] () {
+    mergesort(&(arr[0]), 0, n-1, &(temp[0]));
+  }, threads);
 
   // end timing
   std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();

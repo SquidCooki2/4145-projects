@@ -1,23 +1,10 @@
-CFLAGS=-O3 -std=c11 -fPIC -g
-CXXFLAGS=-O3 -std=c++17 -fPIC -g
-LD=g++
+CXX = g++
+CXXFLAGS = -O3 -std=c++17 -fopenmp
 
+all: merge_sort
 
-all: mergesort_seq
-
-
-mergesort_seq: mergesort_seq.o
-	$(LD) $(LDFLAGS) mergesort_seq.o $(ARCHIVES) -o mergesort_seq
-
-
-bench: mergesort_seq
-	./queue.sh
+merge_sort: merge_sort_par.cpp omp_tasking.hpp
+	$(CXX) $(CXXFLAGS) merge_sort_par.cpp -o merge_sort
 
 clean:
-	-rm *.o
-	-rm mergesort_seq
-
-distclean:
-	-rm *.sh.*
-
-.PHONY:  mergesort_seq
+	rm -f merge_sort
