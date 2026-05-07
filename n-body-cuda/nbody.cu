@@ -168,14 +168,14 @@ void load_from_file(simulation& s, std::string filename) {
 }
 
 void dump_state(simulation& s) {
-    std::cout << s.nbpart << '\t';
-    for (size_t i = 0; i < s.nbpart; ++i) {
-        std::cout << s.mass[i] << '\t';
-        std::cout << s.x[i] << '\t' << s.y[i] << '\t' << s.z[i] << '\t';
-        std::cout << s.vx[i] << '\t' << s.vy[i] << '\t' << s.vz[i] << '\t';
-        std::cout << s.fx[i] << '\t' << s.fy[i] << '\t' << s.fz[i] << '\t';
-    }
-    std::cout << '\n';
+    // std::cout << s.nbpart << '\t';
+    // for (size_t i = 0; i < s.nbpart; ++i) {
+    //     std::cout << s.mass[i] << '\t';
+    //     std::cout << s.x[i] << '\t' << s.y[i] << '\t' << s.z[i] << '\t';
+    //     std::cout << s.vx[i] << '\t' << s.vy[i] << '\t' << s.vz[i] << '\t';
+    //     std::cout << s.fx[i] << '\t' << s.fy[i] << '\t' << s.fz[i] << '\t';
+    // }
+    // std::cout << '\n';
 }
 
 int main(int argc, char* argv[]) {
