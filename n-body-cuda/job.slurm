@@ -20,4 +20,5 @@ echo "100000 particles (blocksize 128):"
 ./nbody_gpu 100000 0.01 100 1000 128
 
 echo ""
+echo "Solar System (blocksize 128):"
 ./nbody_gpu planet 200 1000 100 128 > solar_gpu.out
